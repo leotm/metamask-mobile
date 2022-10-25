@@ -175,11 +175,7 @@ const OnboardingRootNav = () => (
       name="SyncWithExtensionSuccess"
       component={SyncWithExtensionSuccess}
     />
-    <Stack.Screen
-      name={Routes.QR_SCANNER}
-      component={QRScanner}
-      header={null}
-    />
+    <Stack.Screen name="QRScanner" component={QRScanner} header={null} />
     <Stack.Screen
       name={Routes.WEBVIEW.MAIN}
       header={null}
@@ -192,6 +188,7 @@ const App = ({ selectedAddress, userLoggedIn }) => {
   const animationRef = useRef(null);
   const animationNameRef = useRef(null);
   const opacity = useRef(new Animated.Value(1)).current;
+  const authOnLoadAuthLock = useRef(false);
   const [navigator, setNavigator] = useState(undefined);
   const prevNavigator = useRef(navigator);
   const [route, setRoute] = useState();
@@ -345,6 +342,7 @@ const App = ({ selectedAddress, userLoggedIn }) => {
     async function startApp() {
       const existingUser = await AsyncStorage.getItem(EXISTING_USER);
       try {
+        await Authentication.logout(false);
         const currentVersion = getVersion();
         const savedVersion = await AsyncStorage.getItem(CURRENT_APP_VERSION);
         if (currentVersion !== savedVersion) {
@@ -366,6 +364,9 @@ const App = ({ selectedAddress, userLoggedIn }) => {
       } catch (error) {
         Logger.error(error);
       }
+
+      animation?.current?.play();
+      animationName?.current?.play();
     }
     startApp();
   }, []);
@@ -528,10 +529,16 @@ const App = ({ selectedAddress, userLoggedIn }) => {
               component={OnboardingRootNav}
               options={{ headerShown: false }}
             />
-            {userLoggedIn && (
+            {userLoggedIn ? (
               <Stack.Screen
                 name={Routes.ONBOARDING.HOME_NAV}
                 component={Main}
+                options={{ headerShown: false }}
+              />
+            ) : (
+              <Stack.Screen
+                name="Login"
+                component={Login}
                 options={{ headerShown: false }}
               />
             )}
