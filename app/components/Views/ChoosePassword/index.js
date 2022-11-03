@@ -339,6 +339,7 @@ class ChoosePassword extends PureComponent {
         headerLeft: () => <View />,
       });
     }
+    console.log('componentDidUpdate', this.state.biometryType);
   }
 
   componentWillUnmount() {
