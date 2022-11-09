@@ -196,7 +196,6 @@ const createStyles = (colors) =>
     },
   });
 
-const DELETE = 'delete';
 const PASSCODE_NOT_SET_ERROR = 'Error: Error: Passcode not set.';
 const WRONG_PASSWORD_ERROR = 'Error: Error: Decrypt failed';
 const WRONG_PASSWORD_ERROR_ANDROID =
