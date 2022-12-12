@@ -363,9 +363,6 @@ const App = ({ selectedAddress, userLoggedIn }) => {
       } catch (error) {
         Logger.error(error);
       }
-
-      animation?.current?.play();
-      animationName?.current?.play();
     }
     startApp();
   }, []);
