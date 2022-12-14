@@ -261,6 +261,7 @@ class AuthenticationService {
         this.authData,
       );
     }
+    password = this.wipeSensitiveData();
   };
 
   /**
