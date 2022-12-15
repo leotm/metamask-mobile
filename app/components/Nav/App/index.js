@@ -569,6 +569,10 @@ const App = ({ selectedAddress, userLoggedIn }) => {
               />
             )}
             <Stack.Screen
+              name={Routes.VAULT_RECOVERY.RESTORE_WALLET}
+              component={VaultRecoveryFlow}
+            />
+            <Stack.Screen
               name={Routes.MODAL.ROOT_MODAL_FLOW}
               component={RootModalFlow}
             />
