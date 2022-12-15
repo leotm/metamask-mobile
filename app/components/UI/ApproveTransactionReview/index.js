@@ -252,6 +252,7 @@ class ApproveTransactionReview extends PureComponent {
     multiLayerL1FeeTotal: '0x0',
     fetchingUpdateDone: false,
     showBlockExplorerModal: false,
+    address: '',
   };
 
   customSpendLimitInput = React.createRef();
@@ -892,9 +893,11 @@ class ApproveTransactionReview extends PureComponent {
       token: { symbol },
     } = this.state;
 
-    const toggleBlockExplorerModal = () => {
+    const toggleBlockExplorerModal = (address) => {
+      closeVerifyContractDetails();
       this.setState({
         showBlockExplorerModal: !showBlockExplorerModal,
+        address,
       });
     };
 
@@ -905,7 +908,7 @@ class ApproveTransactionReview extends PureComponent {
     return (
       <VerifyContractDetails
         closeVerifyContractView={closeVerifyContractDetails}
-        toggleBlockExplorerView={toggleBlockExplorerModal}
+        toggleBlockExplorer={toggleBlockExplorerModal}
         contractAddress={spenderAddress}
         tokenAddress={to}
         showNickname={showNickname}
@@ -918,14 +921,16 @@ class ApproveTransactionReview extends PureComponent {
   };
 
   renderBlockExplorerView = () => {
-    const { providerType } = this.props;
+    const { providerType, showVerifyContractDetails } = this.props;
     const {
       transaction: { to },
       showBlockExplorerModal,
+      address,
     } = this.state;
 
     const styles = this.getStyles();
     const closeModal = () => {
+      showVerifyContractDetails();
       this.setState({
         showBlockExplorerModal: !showBlockExplorerModal,
       });
@@ -934,7 +939,7 @@ class ApproveTransactionReview extends PureComponent {
       <ShowBlockExplorer
         setIsBlockExplorerVisible={closeModal}
         type={providerType}
-        contractAddress={to}
+        address={address || to}
         headerWrapperStyle={styles.headerWrapper}
         headerTextStyle={styles.headerText}
         iconStyle={styles.icon}
