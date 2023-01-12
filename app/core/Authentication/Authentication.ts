@@ -294,19 +294,10 @@ class AuthenticationService {
       biometryChoice &&
       !(biometryPreviouslyDisabled && biometryPreviouslyDisabled === TRUE)
     ) {
-<<<<<<< HEAD
       return {
         currentAuthType: AUTHENTICATION_TYPE.BIOMETRIC,
         availableBiometryType,
       };
-=======
-      return { type: AUTHENTICATION_TYPE.BIOMETRIC, biometryType };
-    } else if (
-      rememberMe &&
-      this.store?.getState().security.allowLoginWithRememberMe
-    ) {
-      return { type: AUTHENTICATION_TYPE.REMEMBER_ME, biometryType };
->>>>>>> f3aa5a346 (check if remember me is enabled)
     } else if (
       rememberMe &&
       this.store?.getState().security.allowLoginWithRememberMe
