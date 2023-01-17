@@ -264,6 +264,18 @@ class AuthenticationService {
     password = this.wipeSensitiveData();
   };
 
+  resetPassword = async () => {
+    try {
+      await SecureKeychain.resetGenericPassword();
+    } catch (error) {
+      throw new AuthenticationError(
+        `resetPassword failed when calling SecureKeychain.resetGenericPassword with ${error}`,
+        'Authentication.resetPassword',
+        this.authData,
+      );
+    }
+  };
+
   /**
    * Fetches the password from the keychain using the auth method it was originally stored
    */
