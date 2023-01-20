@@ -286,8 +286,9 @@ class ApproveTransactionReview extends PureComponent {
     const {
       transaction: { origin, to, data, from },
       tokenList,
+      selectedAddress
     } = this.props;
-    const { AssetsContractController } = Engine.context;
+    const { AssetsContractController, TokenBalancesController } = Engine.context;
 
     let host;
 
@@ -302,7 +303,8 @@ class ApproveTransactionReview extends PureComponent {
     const { spenderAddress, encodedAmount } = decodeApproveData(data);
     const encodedValue = hexToBN(encodedAmount).toString();
 
-    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
+    let tokenSymbol, tokenDecimals, tokenName, tokenStandard, tokenBalance;
+
     const contract = tokenList[safeToChecksumAddress(to)];
     if (!contract) {
       try {
@@ -360,6 +362,7 @@ class ApproveTransactionReview extends PureComponent {
           decimals: tokenDecimals,
           tokenName,
           tokenId: encodedValue,
+          tokenBalance
         },
         spenderAddress,
         encodedAmount,
@@ -638,10 +641,7 @@ class ApproveTransactionReview extends PureComponent {
       fetchingUpdateDone,
     } = this.state;
     const {
-      accounts,
-      selectedAddress,
       primaryCurrency,
-      tokenBalances,
       gasError,
       activeTabUrl,
       transaction: { origin, from },
@@ -663,6 +663,8 @@ class ApproveTransactionReview extends PureComponent {
     const styles = this.getStyles();
     const isTestNetwork = isTestNet(network);
 
+    const tokenBalance = renderFromTokenMinimalUnit(token?.tokenBalance, token?.decimals);
+
     const originIsDeeplink =
       origin === ORIGIN_DEEPLINK || origin === ORIGIN_QR_CODE;
     const errorPress = isTestNetwork ? this.goToFaucet : this.buyEth;
@@ -675,19 +677,8 @@ class ApproveTransactionReview extends PureComponent {
       gasEstimateType === GAS_ESTIMATE_TYPES.FEE_MARKET ||
       gasEstimateType === GAS_ESTIMATE_TYPES.NONE;
 
-      console.log(tokenBalances, 'tokenBalances[address]')
-
-      // todo: 
-      // temporal state.
       const userEnteredCustomSpend = false
-      const selectedBalance = accounts[selectedAddress].balance
-      const confirmBalance = getAccountBalance(selectedBalance)
  
-      // const balance =
-      // address in tokenBalances
-      //   ? renderFromTokenMinimalUnit(tokenBalances[address], decimals)
-      //   : undefined;
-      console.log(host, 'host')
     return (
       <>
         <View style={styles.section} testID={'approve-modal-test-id'}>
@@ -834,7 +825,7 @@ class ApproveTransactionReview extends PureComponent {
                         multiLayerL1FeeTotal={multiLayerL1FeeTotal}
                       />
                   ) : (
-                    <CustomSpendCap ticker={tokenSymbol} dappProposedValue={originalApproveAmount} accountBalance={confirmBalance} domain={host} onInputChanged={(val) => console.log(val, 'val')} />
+                    <CustomSpendCap ticker={tokenSymbol} dappProposedValue={originalApproveAmount} accountBalance={tokenBalance} domain={host} onInputChanged={(val) => console.log(val, 'val')} />
                   )}
                   {gasError && (
                     <View style={styles.errorWrapper}>
