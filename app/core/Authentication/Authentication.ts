@@ -485,8 +485,6 @@ class AuthenticationService {
     console.log('vault/ Authentication.getType is:', { result });
     return result;
   };
-
-  getAuthData = (): AuthData => this.authData;
 }
 // eslint-disable-next-line import/prefer-default-export
 export const Authentication = new AuthenticationService();
