@@ -213,7 +213,6 @@ const ImportFromSecretRecoveryPhrase = ({
           rememberMe,
         );
 
-<<<<<<< HEAD:app/components/Views/ImportFromSecretRecoveryPhrase/index.js
         try {
           await Authentication.newWalletAndRestore(
             password,
@@ -226,14 +225,6 @@ const ImportFromSecretRecoveryPhrase = ({
           if (Device.isIos && err.toString() === IOS_REJECTED_BIOMETRICS_ERROR)
             await handleRejectedOsBiometricPrompt(parsedSeed);
         }
-=======
-        await Authentication.newWalletAndRestore(
-          password,
-          type,
-          parsedSeed,
-          true,
-        );
->>>>>>> 3366cdaa4 (convert logOut to lock):app/components/Views/ImportFromSeed/index.js
         // Get onboarding wizard state
         const onboardingWizard = await DefaultPreference.get(ONBOARDING_WIZARD);
         setLoading(false);

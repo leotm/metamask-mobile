@@ -372,6 +372,7 @@ class Login extends PureComponent {
     const { current: field } = this.fieldRef;
     field?.blur();
     try {
+      console.log('vault/ Login tryBiometric calling appTriggeredAuth');
       await Authentication.appTriggeredAuth(this.props.selectedAddress);
       const onboardingWizard = await DefaultPreference.get(ONBOARDING_WIZARD);
       if (!onboardingWizard) this.props.setOnboardingWizardStep(1);

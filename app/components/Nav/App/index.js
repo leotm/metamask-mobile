@@ -216,6 +216,7 @@ const App = ({ selectedAddress, userLoggedIn }) => {
       const existingUser = await AsyncStorage.getItem(EXISTING_USER);
       try {
         if (existingUser && selectedAddress) {
+          console.log('vault/ NavApp appTriggeredAuth');
           await Authentication.appTriggeredAuth(selectedAddress);
           // we need to reset the navigator here so that the user cannot go back to the login screen
           navigator.reset({ routes: [{ name: Routes.ONBOARDING.HOME_NAV }] });
