@@ -1,6 +1,5 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { View, Text } from 'react-native';
-import { useSelector } from 'react-redux';
 import SignatureRequest from '../SignatureRequest';
 import ExpandedMessage from '../SignatureRequest/ExpandedMessage';
 import Device from '../../../util/device';
@@ -13,6 +12,7 @@ import { SignatureProps } from '../../hooks/Signatures/useSignatureTypes';
 import { useNavigation } from '@react-navigation/native';
 import useMessage from '../../hooks/Signatures/useMessage';
 import { signatureAnalytics } from '../SignatureRequest/SignatureSharedState';
+import { SignatureType, TYPED_VERSIONS } from '../../../constants/signature';
 
 /**
  * Component that supports eth_signTypedData and eth_signTypedData_v3
@@ -29,7 +29,7 @@ const TypedSign = ({
 }: SignatureProps) => {
   const [rejectMessage, signMessage] = useMessage({
     messageParams,
-    type: 'typed',
+    type: SignatureType.TYPED,
   });
   const navigation = useNavigation();
   const [truncateMessage, setTruncateMessage] = useState<boolean>(false);
@@ -37,14 +37,19 @@ const TypedSign = ({
   const { colors }: any = useTheme();
   const styles = createStyles(colors);
 
+  const signatureAnalyticsCallback = useCallback(() => {
+    return signatureAnalytics({
+      currentPageInformation,
+      type: SignatureType.TYPED,
+      messageParams,
+    });
+  }, [currentPageInformation, messageParams]);
+
+
   useEffect(() => {
     AnalyticsV2.trackEvent(
       MetaMetricsEvents.SIGN_REQUEST_STARTED,
-      signatureAnalytics({
-        currentPageInformation,
-        type: 'typed',
-        messageParams,
-      }),
+      signatureAnalyticsCallback(),
     );
   }, [currentPageInformation, messageParams]);
 
@@ -52,11 +57,7 @@ const TypedSign = ({
     rejectMessage();
     AnalyticsV2.trackEvent(
       MetaMetricsEvents.SIGN_REQUEST_CANCELLED,
-      signatureAnalytics({
-        currentPageInformation,
-        type: 'typed',
-        messageParams,
-      }),
+      signatureAnalyticsCallback()
     );
     onCancel();
   };
@@ -66,22 +67,14 @@ const TypedSign = ({
       signMessage();
       AnalyticsV2.trackEvent(
         MetaMetricsEvents.SIGN_REQUEST_COMPLETED,
-        signatureAnalytics({
-          currentPageInformation,
-          type: 'typed',
-          messageParams,
-        }),
+        signatureAnalyticsCallback(),
       );
       onConfirm();
     } catch (e: any) {
       if (e?.message.startsWith(KEYSTONE_TX_CANCELED)) {
         AnalyticsV2.trackEvent(
           MetaMetricsEvents.QR_HARDWARE_TRANSACTION_CANCELED,
-          signatureAnalytics({
-            currentPageInformation,
-            type: 'typed',
-            messageParams,
-          }),
+          signatureAnalyticsCallback()
         );
         onCancel();
       }
@@ -117,7 +110,7 @@ const TypedSign = ({
     ));
 
   const renderTypedMessage = () => {
-    if (messageParams.version === 'V1') {
+    if (messageParams.version === TYPED_VERSIONS.V1) {
       return (
         <View style={styles.message}>
           {messageParams.data.map(
@@ -138,7 +131,10 @@ const TypedSign = ({
         </View>
       );
     }
-    if (messageParams.version === 'V3' || messageParams.version === 'V4') {
+    if (
+      messageParams.version === TYPED_VERSIONS.V3 ||
+      messageParams.version === TYPED_VERSIONS.V4
+    ) {
       const { message } = JSON.parse(messageParams.data);
       return renderTypedMessageV3(message);
     }
@@ -147,7 +143,7 @@ const TypedSign = ({
   const messageWrapperStyles = [];
   let domain;
 
-  if (messageParams.version === 'V3') {
+  if (messageParams.version === TYPED_VERSIONS.V3) {
     domain = JSON.parse(messageParams.data).domain;
   }
   if (truncateMessage) {
