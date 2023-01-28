@@ -273,18 +273,6 @@ class AuthenticationService {
     password = this.wipeSensitiveData();
   };
 
-  resetPassword = async () => {
-    console.trace('vault/ Authentication.resetPassword');
-    try {
-      await SecureKeychain.resetGenericPassword();
-    } catch (error) {
-      throw new AuthenticationError(
-        `resetPassword failed when calling SecureKeychain.resetGenericPassword with ${error}`,
-        'Authentication.resetPassword',
-        this.authData,
-      );
-    }
-  };
 
   /**
    * Fetches the password from the keychain using the auth method it was originally stored
@@ -311,7 +299,7 @@ class AuthenticationService {
       PASSCODE_DISABLED,
     );
     console.log(
-      `vault/ Authentication.componentAuthenticationType biometryType: ${biometryType}, biometryPreviouslyDisabled: ${biometryPreviouslyDisabled}, passcodePreviouslyDisabled: ${passcodePreviouslyDisabled}`,
+      `vault/ Authentication.componentAuthenticationType biometryType: ${availableBiometryType}, biometryPreviouslyDisabled: ${biometryPreviouslyDisabled}, passcodePreviouslyDisabled: ${passcodePreviouslyDisabled}`,
     );
 
     if (
