@@ -37,6 +37,7 @@ const LoginOptionsSwitch = ({
 
   const onBiometryValueChanged = useCallback(
     async (newBiometryChoice: boolean) => {
+      updateAuthTypeStorageFlags(newBiometryChoice);
       onUpdateBiometryChoice(newBiometryChoice);
     },
     [onUpdateBiometryChoice],
