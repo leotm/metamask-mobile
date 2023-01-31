@@ -263,10 +263,6 @@ class Login extends PureComponent {
     );
 
     if (authData.currentAuthType === AUTHENTICATION_TYPE.PASSCODE) {
-      console.log(
-        'vault/ Login AUTHENTICATION_TYPE.PASSCODE',
-        JSON.stringify(authData),
-      );
       this.setState({
         biometryType: passcodeType(authData.currentAuthType),
         biometryChoice: !(
@@ -276,7 +272,6 @@ class Login extends PureComponent {
         hasBiometricCredentials: !this.props.route?.params?.locked,
       });
     } else if (authData.currentAuthType === AUTHENTICATION_TYPE.REMEMBER_ME) {
-      console.log('vault/ Login AUTHENTICATION_TYPE.REMEMBER_ME');
       this.setState({
         hasBiometricCredentials: false,
         rememberMe: true,
@@ -377,7 +372,6 @@ class Login extends PureComponent {
     const { current: field } = this.fieldRef;
     field?.blur();
     try {
-      console.log('vault/ Login tryBiometric calling appTriggeredAuth');
       await Authentication.appTriggeredAuth(this.props.selectedAddress);
       const onboardingWizard = await DefaultPreference.get(ONBOARDING_WIZARD);
       if (!onboardingWizard) this.props.setOnboardingWizardStep(1);

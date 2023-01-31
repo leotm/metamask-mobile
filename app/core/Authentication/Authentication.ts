@@ -46,11 +46,9 @@ class AuthenticationService {
    * @param {Store} store - A redux function that will dispatch global state actions
    */
   init(store: Store) {
-    console.log('vault/ Authentication.init called');
     if (!AuthenticationService.isInitialized) {
       AuthenticationService.isInitialized = true;
       this.store = store;
-      console.log('vault/ Authentication.init success');
     } else {
       Logger.log(
         'Attempted to call init on AuthenticationService but an instance has already been initialized',
@@ -86,7 +84,6 @@ class AuthenticationService {
     password: string,
     selectedAddress: string,
   ): Promise<void> => {
-    console.log('vault/ Authentication.loginVaultCreation called');
     // Restore vault with user entered password
     const { KeyringController }: any = Engine.context;
     await KeyringController.submitPassword(password);
@@ -120,7 +117,6 @@ class AuthenticationService {
     clearEngine: boolean,
   ): Promise<void> => {
     // Restore vault with user entered password
-    console.log('vault/ Authentication.newWalletVaultAndRestore called');
     const { KeyringController }: any = Engine.context;
     if (clearEngine) await Engine.resetState();
     await KeyringController.createNewVaultAndRestore(password, parsedSeed);
@@ -135,7 +131,6 @@ class AuthenticationService {
   private createWalletVaultAndKeychain = async (
     password: string,
   ): Promise<void> => {
-    console.log('vault/ Authentication.newWalletVaultAndRestore called');
     const { KeyringController }: any = Engine.context;
     await Engine.resetState();
     await KeyringController.createNewVaultAndKeychain(password);
@@ -204,7 +199,6 @@ class AuthenticationService {
   resetVault = async (): Promise<void> => {
     const { KeyringController }: any = Engine.context;
     // Restore vault with empty password
-    console.log('vault/ Authentication.resetVault called');
     await KeyringController.submitPassword('');
     await this.resetPassword();
   };
@@ -218,9 +212,6 @@ class AuthenticationService {
     password: string,
     authType: AUTHENTICATION_TYPE,
   ): Promise<void> => {
-    console.log('vault/ Authentication.storePassword', password, {
-      authType,
-    });
     try {
       switch (authType) {
         case AUTHENTICATION_TYPE.BIOMETRIC:
@@ -298,9 +289,6 @@ class AuthenticationService {
     const passcodePreviouslyDisabled = await AsyncStorage.getItem(
       PASSCODE_DISABLED,
     );
-    console.log(
-      `vault/ Authentication.componentAuthenticationType biometryType: ${availableBiometryType}, biometryPreviouslyDisabled: ${biometryPreviouslyDisabled}, passcodePreviouslyDisabled: ${passcodePreviouslyDisabled}`,
-    );
 
     if (
       availableBiometryType &&
@@ -350,7 +338,6 @@ class AuthenticationService {
       await AsyncStorage.setItem(EXISTING_USER, TRUE);
       await AsyncStorage.removeItem(SEED_PHRASE_HINTS);
       this.dispatchLogin();
-      console.log('vault/ newWalletAndKeyChain', password, authData);
       this.authData = authData;
     } catch (e: any) {
       this.lockApp(false);
@@ -382,7 +369,6 @@ class AuthenticationService {
       await AsyncStorage.setItem(EXISTING_USER, TRUE);
       await AsyncStorage.removeItem(SEED_PHRASE_HINTS);
       this.dispatchLogin();
-      console.log('vault/ newWalletAndRestore', password, authData);
       this.authData = authData;
     } catch (e: any) {
       this.lockApp(false);
@@ -411,7 +397,6 @@ class AuthenticationService {
       await this.loginVaultCreation(password, selectedAddress);
       await this.storePassword(password, authData.currentAuthType);
       this.dispatchLogin();
-      console.log('vault/ newWalletAndKeyChain', password, authData);
       this.authData = authData;
     } catch (e: any) {
       this.lockApp(false);
@@ -429,7 +414,6 @@ class AuthenticationService {
    * @param selectedAddress - current address pulled from persisted state
    */
   appTriggeredAuth = async (selectedAddress: string): Promise<void> => {
-    console.log('vault/ appTriggeredAuth');
     try {
       const credentials: any = await SecureKeychain.getGenericPassword();
       const password = credentials?.password;
@@ -440,7 +424,6 @@ class AuthenticationService {
           this.authData,
         );
       }
-      console.log('vault/ appTriggeredAuth data', this.authData, credentials);
       await this.loginVaultCreation(password, selectedAddress);
       this.dispatchLogin();
     } catch (e: any) {
@@ -467,12 +450,8 @@ class AuthenticationService {
     this.dispatchLogout();
   };
 
-  getType = async (): Promise<AuthData> => {
-    console.log('vault/ calling Authentication.getType');
-    const result = await this.checkAuthenticationMethod();
-    console.log('vault/ Authentication.getType is:', { result });
-    return result;
-  };
+  getType = async (): Promise<AuthData> =>
+    await this.checkAuthenticationMethod();
 }
 // eslint-disable-next-line import/prefer-default-export
 export const Authentication = new AuthenticationService();
