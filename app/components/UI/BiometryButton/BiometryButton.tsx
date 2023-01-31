@@ -30,7 +30,10 @@ const BiometryButton = ({
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
+  console.log('vault/ BiometryButton before render', biometryType);
+
   const renderIcon = (type: BiometryType) => {
+    console.log('vault/ BiometryButton', biometryType);
     if (Platform.OS === 'ios') {
       if (type === 'TouchID') {
         return (

@@ -250,14 +250,20 @@ const ImportFromSecretRecoveryPhrase = ({
         }
         await importAdditionalAccounts();
       } catch (error) {
+        console.log('vault/ ImportFromSRP error catch', error.toString());
         // Should we force people to enable passcode / biometrics?
         if (error.toString() === PASSCODE_NOT_SET_ERROR) {
+          console.log(
+            'vault/ ImportFromSRP error Passcode not set',
+            error.toString(),
+          );
           Alert.alert(
             'Security Alert',
             'In order to proceed, you need to turn Passcode on or any biometrics authentication method supported in your device (FaceID, TouchID or Fingerprint)',
           );
           setLoading(false);
         } else {
+          console.log('vault/ ImportFromSRP error else', error.toString());
           setLoading(false);
           setError(error.message);
           Logger.log('Error with seed phrase import', error.message);
