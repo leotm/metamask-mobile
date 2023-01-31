@@ -175,7 +175,11 @@ const OnboardingRootNav = () => (
       name="SyncWithExtensionSuccess"
       component={SyncWithExtensionSuccess}
     />
-    <Stack.Screen name="QRScanner" component={QRScanner} header={null} />
+    <Stack.Screen
+      name={Routes.QR_SCANNER}
+      component={QRScanner}
+      header={null}
+    />
     <Stack.Screen
       name={Routes.WEBVIEW.MAIN}
       header={null}
