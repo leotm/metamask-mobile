@@ -30,15 +30,13 @@ import Device from '../../../util/device';
 import { fontStyles, baseStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
 import { getNavigationOptionsTitle } from '../../UI/Navbar';
+import SecureKeychain from '../../../core/SecureKeychain';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AppConstants from '../../../core/AppConstants';
 import zxcvbn from 'zxcvbn';
+import Logger from '../../../util/Logger';
 import { ONBOARDING, PREVIOUS_SCREEN } from '../../../constants/navigation';
-import {
-  TRUE,
-  BIOMETRY_CHOICE_DISABLED,
-  PASSCODE_DISABLED,
-} from '../../../constants/storage';
+import { EXISTING_USER, TRUE } from '../../../constants/storage';
 import {
   getPasswordStrengthWord,
   passwordRequirementsMet,
@@ -65,7 +63,6 @@ import {
 import { LoginOptionsSwitch } from '../../UI/LoginOptionsSwitch';
 import { recreateVaultWithNewPassword } from '../../../core/Vault';
 import generateTestId from '../../../../wdio/utils/generateTestId';
-import Logger from '../../../util/Logger';
 
 const createStyles = (colors) =>
   StyleSheet.create({
@@ -340,27 +337,13 @@ class ResetPassword extends PureComponent {
 
   async componentDidMount() {
     this.updateNavBar();
+    const biometryType = await SecureKeychain.getSupportedBiometryType();
 
     const state = { view: CONFIRM_PASSWORD };
-    const authData = await Authentication.getType();
-    const previouslyDisabled = await AsyncStorage.getItem(
-      BIOMETRY_CHOICE_DISABLED,
-    );
-    const passcodePreviouslyDisabled = await AsyncStorage.getItem(
-      PASSCODE_DISABLED,
-    );
-    if (authData.currentAuthType === AUTHENTICATION_TYPE.PASSCODE)
-      this.setState({
-        biometryType: passcodeType(authData.currentAuthType),
-        biometryChoice: !(
-          passcodePreviouslyDisabled && passcodePreviouslyDisabled === TRUE
-        ),
-      });
-    else if (authData.availableBiometryType)
-      this.setState({
-        biometryType: authData.availableBiometryType,
-        biometryChoice: !(previouslyDisabled && previouslyDisabled === TRUE),
-      });
+    if (biometryType) {
+      state.biometryType = Device.isAndroid() ? 'biometrics' : biometryType;
+      state.biometryChoice = true;
+    }
 
     this.setState(state);
 
@@ -424,8 +407,10 @@ class ResetPassword extends PureComponent {
         Logger.error(error);
       }
 
-      this.props.setLockTime(AppConstants.DEFAULT_LOCK_TIMEOUT);
+      await AsyncStorage.setItem(EXISTING_USER, TRUE);
       this.props.passwordSet();
+      this.props.setLockTime(AppConstants.DEFAULT_LOCK_TIMEOUT);
+
       this.setState({ loading: false });
       InteractionManager.runAfterInteractions(() => {
         this.props.navigation.navigate('SecuritySettings');
