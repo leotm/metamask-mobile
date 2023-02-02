@@ -362,6 +362,8 @@ class Login extends PureComponent {
         );
         this.setState({ loading: false });
       } else if (toLowerCaseEquals(error, VAULT_ERROR)) {
+        const vaultCorruptionError = new Error('Vault Corruption Error');
+        Logger.error(vaultCorruptionError, strings('login.clean_vault_error'));
         this.setState({
           loading: false,
           error: strings('login.clean_vault_error'),
