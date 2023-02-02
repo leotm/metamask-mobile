@@ -196,12 +196,15 @@ const createStyles = (colors) =>
     },
   });
 
-const PASSCODE_NOT_SET_ERROR = 'Error: Error: Passcode not set.';
-const WRONG_PASSWORD_ERROR = 'Error: Error: Decrypt failed';
+const PASSCODE_NOT_SET_ERROR = 'Error: Passcode not set.';
+const WRONG_PASSWORD_ERROR = 'Error: Decrypt failed';
 const WRONG_PASSWORD_ERROR_ANDROID =
   'Error: error:1e000065:Cipher functions:OPENSSL_internal:BAD_DECRYPT';
 const VAULT_ERROR = 'Error: Cannot unlock without a previous vault.';
+<<<<<<< HEAD
 const DENY_PIN_ERROR_ANDROID = 'Error: Error: Cancel';
+=======
+>>>>>>> 2175f2b76 (fix ios error string)
 
 /**
  * View where returning users can authenticate
