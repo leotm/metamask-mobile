@@ -131,7 +131,6 @@ class LockScreen extends PureComponent {
     try {
       // Retreive the credentials
       Logger.log('Lockscreen::unlockKeychain - getting credentials');
-      console.log('vault/ Lockscreen calling Authentication.appTriggeredAuth');
       await Authentication.appTriggeredAuth(this.props.selectedAddress);
       this.locked = false;
       this.setState({ ready: true });
@@ -230,7 +229,6 @@ class LockScreen extends PureComponent {
 
   render() {
     const styles = this.getStyles();
-    console.log('vault/ Lockscreen rendering');
 
     return (
       <View style={[baseStyles.flexGrow, styles.container]}>

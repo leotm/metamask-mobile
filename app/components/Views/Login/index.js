@@ -262,11 +262,6 @@ class Login extends PureComponent {
       PASSCODE_DISABLED,
     );
 
-    console.log(
-      `vault/ Login: previouslyDisabled: ${previouslyDisabled}, passcodePreviouslyDisabled: ${passcodePreviouslyDisabled} authData: 
-      ${JSON.stringify(authData)}`,
-    );
-
     if (authData.currentAuthType === AUTHENTICATION_TYPE.PASSCODE) {
       this.setState({
         biometryType: passcodeType(authData.currentAuthType),
@@ -446,10 +441,6 @@ class Login extends PureComponent {
       this.state.biometryChoice &&
       this.state.biometryType &&
       this.state.hasBiometricCredentials
-    );
-
-    console.log(
-      `vault/ Login render shoulHideBiometricAccessoryButton: shouldHideBiometricAccessoryButton: ${shouldHideBiometricAccessoryButton}, biometryChoice: ${this.state.biometryChoice}, biometryType: ${this.state.biometryType}, hasBiometricCredentials: ${this.state.hasBiometricCredentials}}`,
     );
 
     return (
