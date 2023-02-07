@@ -201,10 +201,7 @@ const WRONG_PASSWORD_ERROR = 'Error: Decrypt failed';
 const WRONG_PASSWORD_ERROR_ANDROID =
   'Error: error:1e000065:Cipher functions:OPENSSL_internal:BAD_DECRYPT';
 const VAULT_ERROR = 'Error: Cannot unlock without a previous vault.';
-<<<<<<< HEAD
 const DENY_PIN_ERROR_ANDROID = 'Error: Error: Cancel';
-=======
->>>>>>> 2175f2b76 (fix ios error string)
 
 /**
  * View where returning users can authenticate
@@ -252,8 +249,6 @@ class Login extends PureComponent {
 
   fieldRef = React.createRef();
 
-  authData = Authentication.getType();
-
   async componentDidMount() {
     BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
 
@@ -267,26 +262,29 @@ class Login extends PureComponent {
       PASSCODE_DISABLED,
     );
 
-    if (this.authData.currentAuthType === AUTHENTICATION_TYPE.PASSCODE) {
+    console.log(
+      `vault/ Login: previouslyDisabled: ${previouslyDisabled}, passcodePreviouslyDisabled: ${passcodePreviouslyDisabled} authData: 
+      ${JSON.stringify(authData)}`,
+    );
+
+    if (authData.currentAuthType === AUTHENTICATION_TYPE.PASSCODE) {
       this.setState({
-        biometryType: passcodeType(this.authData.currentAuthType),
+        biometryType: passcodeType(authData.currentAuthType),
         biometryChoice: !(
           passcodePreviouslyDisabled && passcodePreviouslyDisabled === TRUE
         ),
         biometryPreviouslyDisabled: !!passcodePreviouslyDisabled,
         hasBiometricCredentials: !this.props.route?.params?.locked,
       });
-    } else if (
-      this.authData.currentAuthType === AUTHENTICATION_TYPE.REMEMBER_ME
-    ) {
+    } else if (authData.currentAuthType === AUTHENTICATION_TYPE.REMEMBER_ME) {
       this.setState({
         hasBiometricCredentials: false,
         rememberMe: true,
       });
       this.props.setAllowLoginWithRememberMe(true);
-    } else if (this.authData.availableBiometryType) {
+    } else if (authData.availableBiometryType) {
       this.setState({
-        biometryType: this.authData.availableBiometryType,
+        biometryType: authData.availableBiometryType,
         biometryChoice: !(previouslyDisabled && previouslyDisabled === TRUE),
         biometryPreviouslyDisabled: !!previouslyDisabled,
         hasBiometricCredentials:
