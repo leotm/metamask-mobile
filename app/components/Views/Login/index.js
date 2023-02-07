@@ -448,6 +448,10 @@ class Login extends PureComponent {
       this.state.hasBiometricCredentials
     );
 
+    console.log(
+      `vault/ Login render shoulHideBiometricAccessoryButton: shouldHideBiometricAccessoryButton: ${shouldHideBiometricAccessoryButton}, biometryChoice: ${this.state.biometryChoice}, biometryType: ${this.state.biometryType}, hasBiometricCredentials: ${this.state.hasBiometricCredentials}}`,
+    );
+
     return (
       <ErrorBoundary view="Login">
         <SafeAreaView style={styles.mainWrapper}>
