@@ -51,6 +51,7 @@ const AddNickname = (props: AddNicknameProps) => {
   const [errContinue, setErrContinue] = useState(false);
   const [isBlockExplorerVisible, setIsBlockExplorerVisible] = useState(false);
   const [showFullAddress, setShowFullAddress] = useState(false);
+  const [shouldDisableButton, setShouldDisableButton] = useState(true);
   const { colors, themeAppearance } = useTheme();
   const styles = createStyles(colors);
 
@@ -76,6 +77,17 @@ const AddNickname = (props: AddNicknameProps) => {
   useEffect(() => {
     validateAddressOrENSFromInput();
   }, [validateAddressOrENSFromInput]);
+
+  const shouldButtonBeDisabled = useCallback(() => {
+    if (!newNickname || addressHasError) {
+      return setShouldDisableButton(true);
+    }
+    return setShouldDisableButton(false);
+  }, [newNickname, addressHasError]);
+
+  useEffect(() => {
+    shouldButtonBeDisabled();
+  }, [shouldButtonBeDisabled]);
 
   const copyAddress = async () => {
     await ClipboardManager.setString(address);
@@ -211,7 +223,7 @@ const AddNickname = (props: AddNicknameProps) => {
           <View style={styles.updateButton}>
             <StyledButton
               type={'confirm'}
-              disabled={!newNickname || addressHasError}
+              disabled={shouldDisableButton}
               onPress={saveTokenNickname}
               testID={'nickname.save_nickname'}
             >
