@@ -30,6 +30,7 @@ import TransactionTypes from '../../core/TransactionTypes';
 const {
   ASSET: { ERC721, ERC1155 },
 } = TransactionTypes;
+
 /**
  * Returns full checksummed address
  *
@@ -468,6 +469,7 @@ export async function getAddress(toAccount, network) {
   }
   return null;
 }
+
 export const getTokenDetails = async (tokenAddress, userAddress, tokenId) => {
   const { AssetsContractController } = Engine.context;
   const tokenData = await AssetsContractController.getTokenStandardAndDetails(

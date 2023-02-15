@@ -56,8 +56,15 @@ const createStyles = (colors: any) =>
       color: colors.primary.default,
       fontSize: 12,
       lineHeight: 16,
-      marginTop: 8,
+      marginHorizontal: 4,
       textAlign: 'center',
+    },
+    iconContainer: {
+      flexDirection: 'row',
+      marginTop: 8,
+    },
+    iconDropdown: {
+      color: colors.icon.alternative,
     },
     actionTouchable: {
       flexDirection: 'column',
@@ -101,7 +108,7 @@ const createStyles = (colors: any) =>
       ...fontStyles.bold,
     },
     actionViewWrapper: {
-      height: Device.isMediumDevice() ? 200 : 280,
+      height: Device.isMediumDevice() ? 400 : 480,
     },
     actionViewChildren: {
       height: 300,

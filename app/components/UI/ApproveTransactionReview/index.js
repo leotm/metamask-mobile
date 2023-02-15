@@ -22,8 +22,10 @@ import { strings } from '../../../../locales/i18n';
 import { setTransactionObject } from '../../../actions/transaction';
 import { GAS_ESTIMATE_TYPES } from '@metamask/gas-fee-controller';
 import { hexToBN } from '@metamask/controller-utils';
-import { fromTokenMinimalUnit, renderFromTokenMinimalUnit } from '../../../util/number';
-import EthereumAddress from '../EthereumAddress';
+import {
+  fromTokenMinimalUnit,
+  renderFromTokenMinimalUnit,
+} from '../../../util/number';
 import {
   getTicker,
   getNormalizedTxState,
@@ -42,7 +44,6 @@ import Analytics from '../../../core/Analytics/Analytics';
 import { MetaMetricsEvents } from '../../../core/Analytics';
 import AnalyticsV2 from '../../../util/analyticsV2';
 import TransactionHeader from '../../UI/TransactionHeader';
-import AccountInfoCard from '../../UI/AccountInfoCard';
 import TransactionReviewDetailsCard from '../../UI/TransactionReview/TransactionReviewDetailsCard';
 import AppConstants from '../../../core/AppConstants';
 import { UINT256_HEX_MAX_VALUE } from '../../../constants/transaction';
@@ -54,6 +55,8 @@ import {
   isMultiLayerFeeNetwork,
   fetchEstimatedMultiLayerL1Fee,
 } from '../../../util/networks';
+import CustomSpendCap from '../../../component-library/components-temp/CustomSpendCap';
+import IonicIcon from 'react-native-vector-icons/Ionicons';
 import EditPermission from './EditPermission';
 import Logger from '../../../util/Logger';
 import InfoModal from '../Swaps/components/InfoModal';
@@ -64,7 +67,6 @@ import { ThemeContext, mockTheme } from '../../../util/theme';
 import withQRHardwareAwareness from '../QRHardware/withQRHardwareAwareness';
 import QRSigningDetails from '../QRHardware/QRSigningDetails';
 import Routes from '../../../constants/navigation/Routes';
-import formatNumber from '../../../util/formatNumber';
 import { allowedToBuy } from '../FiatOnRampAggregator';
 import { MM_SDK_REMOTE_ORIGIN } from '../../../core/SDKConnect';
 import createStyles from './styles';
@@ -228,6 +230,7 @@ class ApproveTransactionReview extends PureComponent {
      */
     eip1559GasObject: PropTypes.object,
     showBlockExplorer: PropTypes.func,
+    selectedAddress: PropTypes.string,
   };
 
   state = {
@@ -286,9 +289,10 @@ class ApproveTransactionReview extends PureComponent {
     const {
       transaction: { origin, to, data, from },
       tokenList,
-      selectedAddress
+      selectedAddress,
     } = this.props;
-    const { AssetsContractController, TokenBalancesController } = Engine.context;
+    const { AssetsContractController, TokenBalancesController } =
+      Engine.context;
 
     let host;
 
@@ -628,6 +632,9 @@ class ApproveTransactionReview extends PureComponent {
 
   toggleDisplay = () => this.props.onUpdateContractNickname();
 
+  toggleCustomSpendView = () =>
+    this.setState({ isCustomSpendSet: !this.state.isCustomSpendSet });
+
   renderDetails = () => {
     const {
       host,
@@ -638,13 +645,15 @@ class ApproveTransactionReview extends PureComponent {
       tokenType,
       multiLayerL1FeeTotal,
       token,
+      isCustomSpendSet,
+      customSpendValue,
       fetchingUpdateDone,
     } = this.state;
     const {
       primaryCurrency,
       gasError,
       activeTabUrl,
-      transaction: { origin, from },
+      transaction: { origin },
       network,
       over,
       gasEstimateType,
@@ -663,7 +672,10 @@ class ApproveTransactionReview extends PureComponent {
     const styles = this.getStyles();
     const isTestNetwork = isTestNet(network);
 
-    const tokenBalance = renderFromTokenMinimalUnit(token?.tokenBalance, token?.decimals);
+    const tokenBalance = renderFromTokenMinimalUnit(
+      token?.tokenBalance,
+      token?.decimals,
+    );
 
     const originIsDeeplink =
       origin === ORIGIN_DEEPLINK || origin === ORIGIN_QR_CODE;
@@ -677,8 +689,6 @@ class ApproveTransactionReview extends PureComponent {
       gasEstimateType === GAS_ESTIMATE_TYPES.FEE_MARKET ||
       gasEstimateType === GAS_ESTIMATE_TYPES.NONE;
 
-      const userEnteredCustomSpend = false
- 
     return (
       <>
         <View style={styles.section} testID={'approve-modal-test-id'}>
@@ -697,7 +707,11 @@ class ApproveTransactionReview extends PureComponent {
           >
             {strings(
               `spend_limit_edition.${
-                originIsDeeplink ? 'allow_to_address_access' : 'allow_to_access'
+                originIsDeeplink
+                  ? 'allow_to_address_access'
+                  : isCustomSpendSet
+                  ? 'review_spend_cap'
+                  : 'set_spend_cap'
               }`,
             )}{' '}
             {!fetchingUpdateDone && (
@@ -794,17 +808,42 @@ class ApproveTransactionReview extends PureComponent {
           <View style={styles.actionViewWrapper}>
             <ActionView
               confirmButtonMode="confirm"
-              cancelText={strings('transaction.reject')}
-              confirmText={strings('transactions.approve')}
-              onCancelPress={this.onCancelPress}
-              onConfirmPress={this.onConfirmPress}
-              confirmDisabled={Boolean(gasError) || transactionConfirmed}
+              cancelText={
+                isCustomSpendSet ? 'Cancel' : strings('transaction.reject')
+              }
+              confirmText={
+                isCustomSpendSet ? strings('transactions.approve') : 'Next'
+              }
+              onCancelPress={
+                isCustomSpendSet
+                  ? this.toggleCustomSpendView
+                  : this.onCancelPress
+              }
+              onConfirmPress={
+                isCustomSpendSet
+                  ? this.onConfirmPress
+                  : this.toggleCustomSpendView
+              }
+              confirmDisabled={
+                !customSpendValue || Boolean(gasError) || transactionConfirmed
+              }
             >
               <View style={styles.paddingHorizontal}>
-                <AccountInfoCard fromAddress={from} />
                 <View style={styles.section}>
-                  {userEnteredCustomSpend ? (
-                        <TransactionReview
+                  {isCustomSpendSet ? (
+                    <>
+                      <CustomSpendCap
+                        ticker={tokenSymbol}
+                        dappProposedValue={
+                          customSpendValue || originalApproveAmount
+                        }
+                        accountBalance={customSpendValue || tokenBalance}
+                        domain={host}
+                        noEdit
+                        customValue={customSpendValue}
+                        goBackPress={this.toggleCustomSpendView}
+                      />
+                      <TransactionReview
                         gasSelected={gasSelected}
                         primaryCurrency={primaryCurrency}
                         hideTotal
@@ -824,8 +863,20 @@ class ApproveTransactionReview extends PureComponent {
                         onlyGas
                         multiLayerL1FeeTotal={multiLayerL1FeeTotal}
                       />
+                    </>
                   ) : (
-                    <CustomSpendCap ticker={tokenSymbol} dappProposedValue={originalApproveAmount} accountBalance={tokenBalance} domain={host} onInputChanged={(val) => console.log(val, 'val')} />
+                    <CustomSpendCap
+                      ticker={tokenSymbol}
+                      dappProposedValue={
+                        customSpendValue || originalApproveAmount
+                      }
+                      accountBalance={customSpendValue || tokenBalance}
+                      domain={host}
+                      onInputChanged={(val) =>
+                        this.setState({ customSpendValue: val })
+                      }
+                      customValue={customSpendValue}
+                    />
                   )}
                   {gasError && (
                     <View style={styles.errorWrapper}>
@@ -856,10 +907,17 @@ class ApproveTransactionReview extends PureComponent {
                       style={styles.actionTouchable}
                       onPress={this.toggleViewDetails}
                     >
-                      <View>
+                      <View style={styles.iconContainer}>
                         <Text reset style={styles.viewDetailsText}>
-                          {strings('spend_limit_edition.view_details')}
+                          {strings(
+                            'spend_limit_edition.view_transaction_details',
+                          )}
                         </Text>
+                        <IonicIcon
+                          name="ios-arrow-down"
+                          size={16}
+                          style={styles.iconDropdown}
+                        />
                       </View>
                     </TouchableOpacity>
                   )}
@@ -1008,7 +1066,8 @@ const mapStateToProps = (state) => ({
   network: state.engine.backgroundState.NetworkController.network,
   chainId: state.engine.backgroundState.NetworkController.provider.chainId,
   tokenList: getTokenList(state),
-  tokenBalances: state.engine.backgroundState.TokenBalancesController.contractBalances,
+  tokenBalances:
+    state.engine.backgroundState.TokenBalancesController.contractBalances,
 });
 
 const mapDispatchToProps = (dispatch) => ({
