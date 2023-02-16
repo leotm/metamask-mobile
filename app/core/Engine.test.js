@@ -26,9 +26,9 @@ describe('Engine', () => {
     const newEngine = Engine.init({});
     expect(engine).toStrictEqual(newEngine);
   });
-  it('calling Engine.destroy deletes the old instance', () => {
+  it('calling Engine.destroy deletes the old instance', async () => {
     const engine = Engine.init({});
-    engine.destroyEngineInstance();
+    await engine.destroyEngineInstance();
     const newEngine = Engine.init({});
     expect(engine).not.toStrictEqual(newEngine);
   });
