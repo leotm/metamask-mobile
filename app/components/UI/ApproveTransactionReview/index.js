@@ -22,10 +22,7 @@ import { strings } from '../../../../locales/i18n';
 import { setTransactionObject } from '../../../actions/transaction';
 import { GAS_ESTIMATE_TYPES } from '@metamask/gas-fee-controller';
 import { hexToBN } from '@metamask/controller-utils';
-import {
-  fromTokenMinimalUnit,
-  renderFromTokenMinimalUnit,
-} from '../../../util/number';
+import { fromTokenMinimalUnit } from '../../../util/number';
 import {
   getTicker,
   getNormalizedTxState,
@@ -37,8 +34,6 @@ import {
   isSmartContractAddress,
 } from '../../../util/transactions';
 import TransactionTypes from '../../../core/TransactionTypes';
-import Feather from 'react-native-vector-icons/Feather';
-import Identicon from '../../UI/Identicon';
 import { showAlert } from '../../../actions/alert';
 import Analytics from '../../../core/Analytics/Analytics';
 import { MetaMetricsEvents } from '../../../core/Analytics';
@@ -74,9 +69,6 @@ import ButtonLink from '../../../component-library/components/Buttons/Button/var
 import Text, {
   TextVariant,
 } from '../../../component-library/components/Texts/Text';
-import CustomSpendCap from '../../../component-library/components-temp/CustomSpendCap';
-import {getAccountBalance} from '../../../util/dappTransactions';
-
 
 const { ORIGIN_DEEPLINK, ORIGIN_QR_CODE } = AppConstants.DEEPLINKS;
 const POLLING_INTERVAL_ESTIMATED_L1_FEE = 30000;
@@ -230,7 +222,6 @@ class ApproveTransactionReview extends PureComponent {
      */
     eip1559GasObject: PropTypes.object,
     showBlockExplorer: PropTypes.func,
-    selectedAddress: PropTypes.string,
   };
 
   state = {
@@ -238,8 +229,6 @@ class ApproveTransactionReview extends PureComponent {
     editPermissionVisible: false,
     host: undefined,
     originalApproveAmount: undefined,
-    customSpendAmount: null,
-    tokenSymbol: undefined,
     spendLimitUnlimitedSelected: true,
     spendLimitCustomValue: undefined,
     ticker: getTicker(this.props.ticker),
@@ -247,10 +236,11 @@ class ApproveTransactionReview extends PureComponent {
     spenderAddress: '0x...',
     transaction: this.props.transaction,
     token: {},
+    spendLimitCreated: false,
+    customSpendValue: null,
     showGasTooltip: false,
     gasTransactionObject: {},
     multiLayerL1FeeTotal: '0x0',
-    tokenType: undefined,
     fetchingUpdateDone: false,
   };
 
@@ -289,10 +279,8 @@ class ApproveTransactionReview extends PureComponent {
     const {
       transaction: { origin, to, data, from },
       tokenList,
-      selectedAddress,
     } = this.props;
-    const { AssetsContractController, TokenBalancesController } =
-      Engine.context;
+    const { AssetsContractController } = Engine.context;
 
     let host;
 
@@ -307,7 +295,7 @@ class ApproveTransactionReview extends PureComponent {
     const { spenderAddress, encodedAmount } = decodeApproveData(data);
     const encodedValue = hexToBN(encodedAmount).toString();
 
-    let tokenSymbol, tokenDecimals, tokenName, tokenStandard, tokenBalance;
+    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
 
     const contract = tokenList[safeToChecksumAddress(to)];
     if (!contract) {
@@ -360,17 +348,15 @@ class ApproveTransactionReview extends PureComponent {
         host,
         method,
         originalApproveAmount: approveAmount,
-        tokenSymbol,
         token: {
-          symbol: tokenSymbol,
-          decimals: tokenDecimals,
+          tokenSymbol,
+          tokenDecimals,
           tokenName,
-          tokenId: encodedValue,
-          tokenBalance
+          tokenValue: encodedValue,
+          tokenStandard,
         },
         spenderAddress,
         encodedAmount,
-        tokenType: tokenStandard,
         fetchingUpdateDone: true,
         spendLimitCustomValue: minTokenAllowance,
       },
@@ -397,7 +383,11 @@ class ApproveTransactionReview extends PureComponent {
   getAnalyticsParams = () => {
     try {
       const { activeTabUrl, transaction, onSetAnalyticsParams } = this.props;
-      const { tokenSymbol, originalApproveAmount, encodedAmount } = this.state;
+      const {
+        token: { tokenSymbol },
+        originalApproveAmount,
+        encodedAmount,
+      } = this.state;
       const { NetworkController } = Engine.context;
       const { chainId } = NetworkController?.state?.provider || {};
       const isDapp = !Object.values(AppConstants.DEEPLINKS).includes(
@@ -465,8 +455,10 @@ class ApproveTransactionReview extends PureComponent {
   };
 
   onPressSpendLimitUnlimitedSelected = () => {
-    const { token } = this.state;
-    const minTokenAllowance = minimumTokenAllowance(token.decimals);
+    const {
+      token: { tokenDecimals },
+    } = this.state;
+    const minTokenAllowance = minimumTokenAllowance(tokenDecimals);
     this.setState({
       spendLimitUnlimitedSelected: true,
       spendLimitCustomValue: minTokenAllowance,
@@ -511,7 +503,7 @@ class ApproveTransactionReview extends PureComponent {
 
   onEditPermissionSetAmount = () => {
     const {
-      token,
+      token: { tokenDecimals },
       spenderAddress,
       spendLimitUnlimitedSelected,
       originalApproveAmount,
@@ -525,19 +517,11 @@ class ApproveTransactionReview extends PureComponent {
         spendLimitUnlimitedSelected
           ? originalApproveAmount
           : spendLimitCustomValue,
-        token.decimals,
+        tokenDecimals,
         spenderAddress,
         transaction,
       );
 
-      const { encodedAmount } = decodeApproveData(newApprovalTransaction.data);
-
-      const approveAmount = fromTokenMinimalUnit(
-        hexToBN(encodedAmount),
-        token.decimals,
-      );
-
-      this.setState({ customSpendAmount: approveAmount });
       setTransactionObject({
         ...newApprovalTransaction,
         transaction: {
@@ -599,12 +583,11 @@ class ApproveTransactionReview extends PureComponent {
     const {
       host,
       spendLimitUnlimitedSelected,
-      tokenSymbol,
       spendLimitCustomValue,
       originalApproveAmount,
-      token,
+      token: { tokenSymbol, tokenDecimals },
     } = this.state;
-    const minimumSpendLimit = minimumTokenAllowance(token.decimals);
+    const minimumSpendLimit = minimumTokenAllowance(tokenDecimals);
 
     return (
       <EditPermission
@@ -632,23 +615,20 @@ class ApproveTransactionReview extends PureComponent {
 
   toggleDisplay = () => this.props.onUpdateContractNickname();
 
-  toggleCustomSpendView = () =>
-    this.setState({ isCustomSpendSet: !this.state.isCustomSpendSet });
+  goBackToSpendLimit = () => this.setState({ spendLimitCreated: false });
 
   renderDetails = () => {
     const {
       host,
-      tokenSymbol,
       spenderAddress,
       originalApproveAmount,
-      customSpendAmount,
-      tokenType,
       multiLayerL1FeeTotal,
-      token,
-      isCustomSpendSet,
+      token: { tokenStandard, tokenSymbol, tokenName, tokenValue },
       customSpendValue,
       fetchingUpdateDone,
+      spendLimitCreated,
     } = this.state;
+
     const {
       primaryCurrency,
       gasError,
@@ -671,11 +651,6 @@ class ApproveTransactionReview extends PureComponent {
     } = this.props;
     const styles = this.getStyles();
     const isTestNetwork = isTestNet(network);
-
-    const tokenBalance = renderFromTokenMinimalUnit(
-      token?.tokenBalance,
-      token?.decimals,
-    );
 
     const originIsDeeplink =
       origin === ORIGIN_DEEPLINK || origin === ORIGIN_QR_CODE;
@@ -709,7 +684,7 @@ class ApproveTransactionReview extends PureComponent {
               `spend_limit_edition.${
                 originIsDeeplink
                   ? 'allow_to_address_access'
-                  : isCustomSpendSet
+                  : spendLimitCreated
                   ? 'review_spend_cap'
                   : 'set_spend_cap'
               }`,
@@ -719,10 +694,10 @@ class ApproveTransactionReview extends PureComponent {
                 {strings('spend_limit_edition.token')}
               </Text>
             )}
-            {tokenType === ERC20 && (
+            {tokenStandard === ERC20 && (
               <Text variant={TextVariant.HeadingMD}>{tokenSymbol}</Text>
             )}
-            {(tokenType === ERC721 || tokenType === ERC1155) && (
+            {(tokenStandard === ERC721 || tokenStandard === ERC1155) && (
               <ButtonLink
                 onPress={showBlockExplorer}
                 label={
@@ -730,152 +705,82 @@ class ApproveTransactionReview extends PureComponent {
                     variant={TextVariant.HeadingMD}
                     style={styles.buttonColor}
                   >
-                    {token?.tokenName ||
-                      token?.symbol ||
+                    {tokenName ||
+                      tokenSymbol ||
                       strings(`spend_limit_edition.nft`)}{' '}
-                    (#{token?.tokenId})
+                    (#{tokenValue})
                   </Text>
                 }
               />
             )}
           </Text>
 
-          {tokenType !== ERC721 &&
-            tokenType !== ERC1155 &&
-            originalApproveAmount && (
-              <View style={styles.tokenAccess}>
-                <Text bold style={styles.tokenKey}>
-                  {` ${strings('spend_limit_edition.access_up_to')} `}
-                </Text>
-                <Text numberOfLines={4} style={styles.tokenValue}>
-                  {` ${
-                    customSpendAmount
-                      ? formatNumber(customSpendAmount)
-                      : originalApproveAmount &&
-                        formatNumber(originalApproveAmount)
-                  } ${tokenSymbol}`}
-                </Text>
-              </View>
-            )}
-
-          {fetchingUpdateDone &&
-            tokenType !== ERC721 &&
-            tokenType !== ERC1155 && (
-              <TouchableOpacity
-                style={styles.actionTouchable}
-                onPress={this.toggleEditPermission}
-              >
-                <Text reset style={styles.editPermissionText}>
-                  {strings('spend_limit_edition.edit_permission')}
-                </Text>
-              </TouchableOpacity>
-            )}
-          <Text reset style={styles.explanation}>
-            {`${strings(
-              `spend_limit_edition.${
-                originIsDeeplink
-                  ? 'you_trust_this_address'
-                  : 'you_trust_this_site'
-              }`,
-            )}`}
-          </Text>
-          <View style={styles.contactWrapper}>
-            <Text>{strings('nickname.contract')}: </Text>
-            <TouchableOpacity
-              style={styles.addressWrapper}
-              onPress={this.copyContractAddress}
-              testID={'contract-address'}
-            >
-              <Identicon address={this.state.transaction.to} diameter={20} />
-              {this.props.nicknameExists ? (
-                <Text numberOfLines={1} style={styles.address}>
-                  {this.props.nickname}
-                </Text>
-              ) : (
-                <EthereumAddress
-                  address={this.state.transaction.to}
-                  style={styles.address}
-                  type={'short'}
-                />
-              )}
-              <Feather name="copy" size={18} style={styles.actionIcon} />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.nickname} onPress={this.toggleDisplay}>
-            {this.props.nicknameExists ? 'Edit' : 'Add'}{' '}
-            {strings('nickname.nickname')}
-          </Text>
+          {(tokenStandard === ERC721 || tokenStandard === ERC1155) && (
+            <Text reset style={styles.explanation}>
+              {`${strings(
+                `spend_limit_edition.${
+                  originIsDeeplink
+                    ? 'you_trust_this_address'
+                    : 'you_trust_this_site'
+                }`,
+              )}`}
+            </Text>
+          )}
           <View style={styles.actionViewWrapper}>
             <ActionView
               confirmButtonMode="confirm"
-              cancelText={
-                isCustomSpendSet ? 'Cancel' : strings('transaction.reject')
-              }
+              cancelText={strings('transaction.reject')}
               confirmText={
-                isCustomSpendSet ? strings('transactions.approve') : 'Next'
+                tokenStandard === ERC20 && !spendLimitCreated
+                  ? strings('transaction.next')
+                  : strings('transactions.approve')
               }
-              onCancelPress={
-                isCustomSpendSet
-                  ? this.toggleCustomSpendView
-                  : this.onCancelPress
-              }
-              onConfirmPress={
-                isCustomSpendSet
-                  ? this.onConfirmPress
-                  : this.toggleCustomSpendView
-              }
+              onCancelPress={this.onCancelPress}
+              onConfirmPress={this.onConfirmPress}
               confirmDisabled={
                 !customSpendValue || Boolean(gasError) || transactionConfirmed
               }
             >
               <View style={styles.paddingHorizontal}>
                 <View style={styles.section}>
-                  {isCustomSpendSet ? (
+                  {tokenStandard === ERC20 && (
                     <>
                       <CustomSpendCap
                         ticker={tokenSymbol}
                         dappProposedValue={
                           customSpendValue || originalApproveAmount
                         }
-                        accountBalance={customSpendValue || tokenBalance}
+                        accountBalance={customSpendValue || 0}
                         domain={host}
-                        noEdit
+                        noEdit={spendLimitCreated}
                         customValue={customSpendValue}
-                        goBackPress={this.toggleCustomSpendView}
-                      />
-                      <TransactionReview
-                        gasSelected={gasSelected}
-                        primaryCurrency={primaryCurrency}
-                        hideTotal
-                        noMargin
-                        onEdit={this.edit}
-                        chainId={this.props.chainId}
-                        onUpdatingValuesStart={onUpdatingValuesStart}
-                        onUpdatingValuesEnd={onUpdatingValuesEnd}
-                        animateOnChange={animateOnChange}
-                        isAnimating={isAnimating}
-                        gasEstimationReady={gasEstimationReady}
-                        legacy={!showFeeMarket}
-                        gasObject={
-                          !showFeeMarket ? legacyGasObject : eip1559GasObject
+                        goBackPress={this.goBackToSpendLimit}
+                        onInputChanged={(value) =>
+                          this.setState({ customSpendValue: value })
                         }
-                        updateTransactionState={updateTransactionState}
-                        onlyGas
-                        multiLayerL1FeeTotal={multiLayerL1FeeTotal}
                       />
                     </>
-                  ) : (
-                    <CustomSpendCap
-                      ticker={tokenSymbol}
-                      dappProposedValue={
-                        customSpendValue || originalApproveAmount
+                  )}
+                  {(spendLimitCreated || tokenStandard !== ERC20) && (
+                    <TransactionReview
+                      gasSelected={gasSelected}
+                      primaryCurrency={primaryCurrency}
+                      hideTotal
+                      noMargin
+                      onEdit={this.edit}
+                      chainId={this.props.chainId}
+                      onUpdatingValuesStart={onUpdatingValuesStart}
+                      onUpdatingValuesEnd={onUpdatingValuesEnd}
+                      animateOnChange={animateOnChange}
+                      isAnimating={isAnimating}
+                      gasEstimationReady={gasEstimationReady}
+                      legacy={!showFeeMarket}
+                      gasObject={
+                        !showFeeMarket ? legacyGasObject : eip1559GasObject
                       }
-                      accountBalance={customSpendValue || tokenBalance}
-                      domain={host}
-                      onInputChanged={(val) =>
-                        this.setState({ customSpendValue: val })
-                      }
-                      customValue={customSpendValue}
+                      updateTransactionState={updateTransactionState}
+                      onlyGas
+                      multiLayerL1FeeTotal={multiLayerL1FeeTotal}
                     />
                   )}
                   {gasError && (
@@ -937,12 +842,10 @@ class ApproveTransactionReview extends PureComponent {
       host,
       method,
       viewData,
-      tokenSymbol,
       originalApproveAmount,
       spendLimitUnlimitedSelected,
       spendLimitCustomValue,
-      token,
-      tokenType,
+      token: { tokenStandard, tokenSymbol, tokenValue, tokenName },
     } = this.state;
     const {
       transaction: { to, data },
@@ -962,9 +865,9 @@ class ApproveTransactionReview extends PureComponent {
         allowance={allowance}
         tokenSymbol={tokenSymbol}
         data={data}
-        tokenId={token?.tokenId}
-        tokenName={token?.tokenName}
-        tokenType={tokenType}
+        tokenValue={tokenValue}
+        tokenName={tokenName}
+        tokenStandard={tokenStandard}
         method={method}
         displayViewData={viewData}
       />
@@ -991,8 +894,21 @@ class ApproveTransactionReview extends PureComponent {
   };
 
   onConfirmPress = () => {
+    const {
+      spendLimitCreated,
+      token: { tokenStandard },
+    } = this.state;
     const { onConfirm } = this.props;
-    onConfirm && onConfirm();
+
+    if (tokenStandard === ERC20 && !spendLimitCreated) {
+      return this.setState({ spendLimitCreated: true });
+    }
+
+    if (tokenStandard === ERC20 && spendLimitCreated) {
+      return onConfirm && onConfirm();
+    }
+
+    return onConfirm && onConfirm();
   };
 
   goToFaucet = () => {
@@ -1066,8 +982,6 @@ const mapStateToProps = (state) => ({
   network: state.engine.backgroundState.NetworkController.network,
   chainId: state.engine.backgroundState.NetworkController.provider.chainId,
   tokenList: getTokenList(state),
-  tokenBalances:
-    state.engine.backgroundState.TokenBalancesController.contractBalances,
 });
 
 const mapDispatchToProps = (dispatch) => ({

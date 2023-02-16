@@ -101,7 +101,7 @@ export default class TransactionReviewDetailsCard extends Component {
     method: PropTypes.string,
     nickname: PropTypes.string,
     nicknameExists: PropTypes.bool,
-    tokenId: PropTypes.string,
+    tokenValue: PropTypes.string,
     tokenType: PropTypes.string,
     tokenName: PropTypes.string,
   };
@@ -120,7 +120,7 @@ export default class TransactionReviewDetailsCard extends Component {
       displayViewData,
       nickname,
       nicknameExists,
-      tokenId,
+      tokenValue,
       tokenName,
       tokenType,
     } = this.props;
@@ -170,7 +170,7 @@ export default class TransactionReviewDetailsCard extends Component {
             <Text style={styles.transactionDetailsTextRight}>
               {tokenType === ERC20
                 ? `${formatNumber(allowance)} ${tokenSymbol}`
-                : `${tokenName} (#${tokenId})`}
+                : `${tokenName} (#${tokenValue})`}
             </Text>
           </View>
         </View>
