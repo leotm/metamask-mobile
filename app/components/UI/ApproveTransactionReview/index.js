@@ -22,7 +22,7 @@ import { strings } from '../../../../locales/i18n';
 import { setTransactionObject } from '../../../actions/transaction';
 import { GAS_ESTIMATE_TYPES } from '@metamask/gas-fee-controller';
 import { hexToBN } from '@metamask/controller-utils';
-import { fromTokenMinimalUnit } from '../../../util/number';
+import { fromTokenMinimalUnit, renderFromTokenMinimalUnit } from '../../../util/number';
 import {
   getTicker,
   getNormalizedTxState,
@@ -280,7 +280,7 @@ class ApproveTransactionReview extends PureComponent {
       transaction: { origin, to, data, from },
       tokenList,
     } = this.props;
-    const { AssetsContractController } = Engine.context;
+    const { AssetsContractController, TokenBalancesController } = Engine.context;
 
     let host;
 
@@ -291,11 +291,14 @@ class ApproveTransactionReview extends PureComponent {
     } else {
       host = getHost(origin);
     }
-
+    
+    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
+   
     const { spenderAddress, encodedAmount } = decodeApproveData(data);
     const encodedValue = hexToBN(encodedAmount).toString();
 
-    let tokenSymbol, tokenDecimals, tokenName, tokenStandard;
+    let tokenBalance = await TokenBalancesController.getERC20BalanceOf(to, from)
+    
 
     const contract = tokenList[safeToChecksumAddress(to)];
     if (!contract) {
@@ -311,15 +314,12 @@ class ApproveTransactionReview extends PureComponent {
             from,
             encodedValue,
           );
-          if (standard === ERC721 || standard === ERC1155) {
+
+            tokenBalance = renderFromTokenMinimalUnit(tokenBalance, decimals)
             tokenName = name;
-            tokenSymbol = symbol;
-            tokenStandard = standard;
-          } else {
             tokenDecimals = decimals;
             tokenSymbol = symbol;
             tokenStandard = standard;
-          }
         } else {
           tokenDecimals = await AssetsContractController.getERC20TokenDecimals(
             to,
@@ -354,6 +354,7 @@ class ApproveTransactionReview extends PureComponent {
           tokenName,
           tokenValue: encodedValue,
           tokenStandard,
+          tokenBalance
         },
         spenderAddress,
         encodedAmount,
@@ -623,7 +624,7 @@ class ApproveTransactionReview extends PureComponent {
       spenderAddress,
       originalApproveAmount,
       multiLayerL1FeeTotal,
-      token: { tokenStandard, tokenSymbol, tokenName, tokenValue },
+      token: { tokenStandard, tokenSymbol, tokenName, tokenValue, tokenBalance },
       customSpendValue,
       fetchingUpdateDone,
       spendLimitCreated,
@@ -744,13 +745,10 @@ class ApproveTransactionReview extends PureComponent {
               <View style={styles.paddingHorizontal}>
                 <View style={styles.section}>
                   {tokenStandard === ERC20 && (
-                    <>
                       <CustomSpendCap
                         ticker={tokenSymbol}
-                        dappProposedValue={
-                          customSpendValue || originalApproveAmount
-                        }
-                        accountBalance={customSpendValue || 0}
+                        dappProposedValue={originalApproveAmount}
+                        accountBalance={tokenBalance}
                         domain={host}
                         noEdit={spendLimitCreated}
                         customValue={customSpendValue}
@@ -759,7 +757,6 @@ class ApproveTransactionReview extends PureComponent {
                           this.setState({ customSpendValue: value })
                         }
                       />
-                    </>
                   )}
                   {(spendLimitCreated || tokenStandard !== ERC20) && (
                     <TransactionReview
