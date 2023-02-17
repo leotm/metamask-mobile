@@ -76,7 +76,7 @@ public class MainApplication extends MultiDexApplication implements ShareApplica
 			e.printStackTrace();
 		}
 
-		if (BuildConfig.DEBUG) {
+		if (true || BuildConfig.DEBUG) {
 			WebView.setWebContentsDebuggingEnabled(true);
 		}
 
