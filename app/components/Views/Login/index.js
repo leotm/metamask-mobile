@@ -304,6 +304,7 @@ class Login extends PureComponent {
   handleVaultCorruption = async () => {
     const LOGIN_VAULT_CORRUPTION_TAG = 'Login/ handleVaultCorruption:';
     const { navigation } = this.props;
+    this.setState({ loading: true });
     try {
       const backupResult = await getVaultFromBackup();
       if (backupResult.vault && this.state.password) {

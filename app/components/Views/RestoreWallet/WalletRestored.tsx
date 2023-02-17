@@ -24,6 +24,7 @@ import { MetaMetricsEvents } from '../../../core/Analytics';
 import AnalyticsV2 from '../../../util/analyticsV2';
 import generateDeviceAnalyticsMetaData from '../../../util/metrics';
 import { SRP_GUIDE_URL } from '../../../constants/urls';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 export const createWalletRestoredNavDetails = createNavigationDetails(
   Routes.VAULT_RECOVERY.WALLET_RESTORED,
@@ -33,7 +34,7 @@ const WalletRestored = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const { colors } = useAppThemeFromContext();
   const styles = createStyles(colors);
-  const navigation = useNavigation();
+  const navigation = useNavigation<StackNavigationProp<any>>();
   const selectedAddress = useSelector(
     (state: any) =>
       state.engine.backgroundState.PreferencesController.selectedAddress,
@@ -51,10 +52,10 @@ const WalletRestored = () => {
   const finishWalletRestore = useCallback(async (): Promise<void> => {
     try {
       await Authentication.appTriggeredAuth(selectedAddress);
-      navigation.navigate(Routes.ONBOARDING.HOME_NAV);
+      navigation.replace(Routes.ONBOARDING.HOME_NAV);
     } catch (e) {
       // we were not able to log in automatically so we will go back to login
-      navigation.navigate(Routes.ONBOARDING.LOGIN);
+      navigation.replace(Routes.ONBOARDING.LOGIN);
     }
   }, [navigation, selectedAddress]);
 

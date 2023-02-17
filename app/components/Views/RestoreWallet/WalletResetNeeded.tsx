@@ -45,7 +45,7 @@ const WalletResetNeeded = () => {
       MetaMetricsEvents.VAULT_CORRUPTION_WALLET_RESET_NEEDED_CREATE_NEW_WALLET_BUTTON_PRESSED,
       deviceMetaData,
     );
-    navigation.navigate(Routes.MODAL.ROOT_MODAL_FLOW, {
+    navigation.replace(Routes.MODAL.ROOT_MODAL_FLOW, {
       screen: Routes.MODAL.DELETE_WALLET,
     });
   }, [deviceMetaData, navigation]);
@@ -55,7 +55,7 @@ const WalletResetNeeded = () => {
       MetaMetricsEvents.VAULT_CORRUPTION_WALLET_RESET_NEEDED_TRY_AGAIN_BUTTON_PRESSED,
       deviceMetaData,
     );
-    navigation.navigate(
+    navigation.replace(
       ...createRestoreWalletNavDetails({
         previousScreen: Routes.VAULT_RECOVERY.WALLET_RESET_NEEDED,
       }),
