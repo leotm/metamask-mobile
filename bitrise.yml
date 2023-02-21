@@ -42,6 +42,15 @@ workflows:
           inputs:
             - command: lint
           is_always_run: true
+  code_setup_dev:
+    steps:
+      - generate-text-file@0:
+          inputs:
+            - file_name: .npmrc
+            - file_content: {{ printf "%s\n\n%s" "@metamask:registry=https://npm.pkg.github.com" "//npm.pkg.github.com/:_authToken=$PACKAGE_READ_TOKEN" }}
+          title: Get Yarn cache directory
+    after_run:
+      - code_setup
   # CI Steps
   ci_test:
     before_run:
@@ -70,7 +79,7 @@ workflows:
           title: Detox - Install CLI
   android_e2e_test:
     before_run:
-      - code_setup
+      - code_setup_dev
       - e2e_setup
     steps:
       - install-missing-android-tools@2:
@@ -95,7 +104,7 @@ workflows:
           is_always_run: false
   ios_e2e_test:
     before_run:
-      - code_setup
+      - code_setup_dev
       - e2e_setup
     steps:
       - certificate-and-profile-installer@1: {}
@@ -204,7 +213,7 @@ workflows:
           is_always_run: false
   create_qa_builds:
     before_run:
-      - code_setup
+      - code_setup_dev
     steps:
       - build-router-start@0:
           inputs:
@@ -266,7 +275,7 @@ workflows:
           title: Bitrise Deploy Sourcemaps
   build_android_qa:
     before_run:
-      - code_setup
+      - code_setup_dev
     after_run:
       - _upload_apk_to_browserstack
     steps:
@@ -420,7 +429,7 @@ workflows:
           title: Deploy Source Map
   build_ios_qa:
     before_run:
-      - code_setup
+      - code_setup_dev
     steps:
       - certificate-and-profile-installer@1: {}
       - set-xcode-build-number@1:
